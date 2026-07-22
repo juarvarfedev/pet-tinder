@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pet Swipe</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <div class="device-frame">
+      <div class="top-notch"></div>
+      <div class="screen">
+        <header class="screen-header">
+          <div>
+            <p class="device-title">Pet Swipe</p>
+            <p class="device-subtitle">Like, pass, undo — swipe through the pack.</p>
+          </div>
+          <button id="restartBtn" class="ghost-btn">Restart</button>
+        </header>
+
+        <main id="appContent">
+          <div class="card-shell" id="cardShell">
+            <div class="pet-badge">
+              <span id="speciesBadge">Mixed</span>
+              <span id="countBadge">0 / 0</span>
+            </div>
+            <div class="pet-card" id="petCard">
+              <div class="swipe-overlay swipe-like">LIKE</div>
+              <div class="swipe-overlay swipe-pass">NOPE</div>
+              <img id="petImage" alt="Pet preview" />
+              <div class="pet-card-meta">
+                <p class="pet-name" id="petName"></p>
+                <p class="pet-species" id="petSpecies"></p>
+              </div>
+              <div class="empty-state hidden" id="emptyState">
+                <h2>All pets rated</h2>
+                <p class="empty-copy">Restart to swipe again.</p>
+              </div>
+            </div>
+        </main>
+
+        <footer class="action-bar">
+          <button id="undoBtn" class="ghost-btn" disabled>Undo (U)</button>
+          <button id="passBtn" class="bad-btn">← Pass</button>
+          <button id="likeBtn" class="good-btn">Like →</button>
+        </footer>
+
+        <div class="hint-row">
+          <span>Keyboard: L = Like · P = Pass · U = Undo · R = Restart</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
