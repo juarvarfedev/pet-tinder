@@ -27,7 +27,6 @@ const elements = {
   undoBtn: document.getElementById("undoBtn"),
   likeBtn: document.getElementById("likeBtn"),
   passBtn: document.getElementById("passBtn"),
-  restartBtn: document.getElementById("restartBtn"),
   cardShell: document.getElementById("cardShell"),
 };
 
@@ -101,7 +100,7 @@ function renderLoadingCard() {
   elements.emptyState.querySelector("h2").textContent = "Loading pets...";
   elements.emptyState.querySelector(".empty-copy").textContent =
     "Fetching the next batch now.";
-  elements.countBadge.textContent = "0 / 0";
+  elements.countBadge.textContent = "0";
   elements.speciesBadge.textContent = "Loading";
 }
 
@@ -113,8 +112,8 @@ function renderEmptyCard() {
   elements.emptyState.classList.remove("hidden");
   elements.emptyState.querySelector("h2").textContent = "All pets rated";
   elements.emptyState.querySelector(".empty-copy").textContent =
-    "Restart to swipe again.";
-  elements.countBadge.textContent = `${state.deck.length} / ${state.deck.length}`;
+    "No more pets available.";
+  elements.countBadge.textContent = `${state.deck.length}`;
   elements.speciesBadge.textContent = "Pets";
 }
 
@@ -124,8 +123,8 @@ function renderPetCard(currentPet) {
   elements.petImage.src = currentPet.image;
   elements.petImage.alt = `${currentPet.name} the ${currentPet.type}`;
   elements.petName.textContent = currentPet.name;
-  elements.petSpecies.textContent = `${currentPet.type} • ${state.currentIndex + 1} / ${state.deck.length}`;
-  elements.countBadge.textContent = `${state.currentIndex + 1} / ${state.deck.length}`;
+  elements.petSpecies.textContent = `${currentPet.type}`;
+  elements.countBadge.textContent = `${state.currentIndex + 1}`;
   elements.speciesBadge.textContent = currentPet.display;
 }
 
@@ -174,7 +173,7 @@ function applySwipeAnimation(direction) {
   );
 }
 
-function completeSwipe(direction) {
+async function completeSwipe(direction) {
   const pet = state.deck[state.currentIndex];
   if (!pet) {
     state.isAnimating = false;
@@ -186,6 +185,11 @@ function completeSwipe(direction) {
   state.isAnimating = false;
   elements.petCard.classList.remove("swipe-right", "swipe-left");
   swipeAction = null;
+
+  if (state.currentIndex >= state.deck.length) {
+    await loadMorePets();
+  }
+
   render();
 }
 
@@ -211,7 +215,7 @@ function setLoading(isLoading) {
   state.isLoading = isLoading;
 }
 
-async function resetApp() {
+async function loadInitialDeck() {
   setLoading(true);
   state.history = [];
   state.currentIndex = 0;
@@ -223,6 +227,25 @@ async function resetApp() {
   } catch (error) {
     console.error("Could not load pets:", error);
     state.deck = [];
+  } finally {
+    setLoading(false);
+    render();
+  }
+}
+
+async function loadMorePets() {
+  if (state.isLoading) {
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const pets = await fetchPetBatch(10);
+    const newDeckItems = pets.map(createDeckItem);
+    state.deck = [...state.deck, ...newDeckItems];
+  } catch (error) {
+    console.error("Could not load more pets:", error);
   } finally {
     setLoading(false);
     render();
@@ -297,10 +320,6 @@ function handleKeyboard(event) {
   if (key === "u") {
     undoAction();
   }
-
-  if (key === "r") {
-    resetApp();
-  }
 }
 
 function handleTransitionEnd(event) {
@@ -315,7 +334,6 @@ function bindActions() {
   elements.likeBtn.addEventListener("click", likePet);
   elements.passBtn.addEventListener("click", passPet);
   elements.undoBtn.addEventListener("click", undoAction);
-  elements.restartBtn.addEventListener("click", resetApp);
 
   document.addEventListener("keydown", handleKeyboard);
 
@@ -328,7 +346,7 @@ function bindActions() {
 
 async function initApp() {
   bindActions();
-  await resetApp();
+  await loadInitialDeck();
 }
 
 initApp();
