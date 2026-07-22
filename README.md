@@ -1,6 +1,6 @@
 # Pet Rating App
 
-A lightweight browser-based pet swipe app where users can like or pass on random pets, undo their last decision, and keep browsing through a continuously loaded deck.
+A lightweight browser-based pet swipe app vibe-coded with GitHub Copilot. Users can like or pass on random pets, undo their last decision, and keep browsing through a continuously loaded deck.
 
 ## Features
 
