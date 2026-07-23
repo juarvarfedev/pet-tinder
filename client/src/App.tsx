@@ -8,6 +8,13 @@ export type Pet = {
   species: string;
 };
 
+type Decision = "like" | "pass";
+
+type DecisionRecord = {
+  pet: Pet;
+  decision: Decision;
+};
+
 const BASE_IMAGE_URL = "https://pets-images.dev-apis.com/pets";
 
 const buildImageUrl = (species: string, index: number) => {
@@ -36,7 +43,7 @@ function shuffle<T>(items: T[]) {
 function App() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [history, setHistory] = useState<Pet[]>([]);
+  const [history, setHistory] = useState<DecisionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,8 +69,8 @@ function App() {
   const currentPet = pets[currentIndex];
   const nextPet = pets[currentIndex + 1];
 
-  const handleDecision = useCallback((pet: Pet) => {
-    setHistory((prev) => [pet, ...prev]);
+  const handleDecision = useCallback((pet: Pet, decision: Decision) => {
+    setHistory((prev) => [{ pet, decision }, ...prev]);
     setCurrentIndex((prev) => prev + 1);
   }, []);
 
@@ -82,9 +89,9 @@ function App() {
 
       const key = event.key.toLowerCase();
       if (key === "l") {
-        handleDecision(currentPet);
+        handleDecision(currentPet, "like");
       } else if (key === "p") {
-        handleDecision(currentPet);
+        handleDecision(currentPet, "pass");
       } else if (key === "u") {
         handleUndo();
       }
@@ -150,14 +157,17 @@ function App() {
                     key={pet.id}
                     className="absolute inset-x-0 mx-auto w-[92%] max-w-lg rounded-[32px] border border-white/10 bg-slate-950/95 shadow-soft"
                     drag={index === 0 ? "x" : false}
-                    dragConstraints={{ left: 0, right: 0 }}
+                    dragConstraints={{ left: -250, right: 250 }}
                     dragElastic={0.18}
+                    dragMomentum={false}
+                    dragDirectionLock
+                    style={{ touchAction: "pan-y" }}
                     onDragEnd={(_, info) => {
                       if (index !== 0) return;
                       if (info.offset.x > 140) {
-                        handleDecision(pet);
+                        handleDecision(pet, "like");
                       } else if (info.offset.x < -140) {
-                        handleDecision(pet);
+                        handleDecision(pet, "pass");
                       }
                     }}
                     whileTap={{ scale: 0.98 }}
@@ -231,14 +241,14 @@ function App() {
           <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => currentPet && handleDecision(currentPet)}
+              onClick={() => currentPet && handleDecision(currentPet, "pass")}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/15"
             >
               <span className="text-pink-300">←</span> Pass
             </button>
             <button
               type="button"
-              onClick={() => currentPet && handleDecision(currentPet)}
+              onClick={() => currentPet && handleDecision(currentPet, "like")}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-pink-400"
             >
               Like <Heart size={16} />
