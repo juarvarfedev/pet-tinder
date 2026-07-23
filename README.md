@@ -4,6 +4,9 @@ A full-stack pet swipe app with a modern React frontend and a database-backed Ex
 
 This project was vibecoded with assistance from GitHub Copilot and developed using prompt engineering techniques to guide iterative implementation and fixes.
 
+This project is deployed on Render. The live demo is available at:
+- https://pet-tinder-v6ix.onrender.com/
+
 ## Features
 
 - Swipe-style card interface for rating pets
@@ -63,10 +66,6 @@ This project was vibecoded with assistance from GitHub Copilot and developed usi
 This project is for learning and demo purposes.
 
 ## Deployment
-
-This project is deployed on Render. The live demo is available at:
-
-- https://pet-tinder-v6ix.onrender.com/
 
 If you want to deploy the app on Render yourself, use these commands in the Render dashboard for the service:
 
