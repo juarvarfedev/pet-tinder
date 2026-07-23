@@ -2,6 +2,8 @@
 
 A full-stack pet swipe app with a modern React frontend and a database-backed Express backend.
 
+This project was vibecoded with assistance from GitHub Copilot and developed using prompt engineering techniques to guide iterative implementation and fixes.
+
 ## Features
 
 - Swipe-style card interface for rating pets
@@ -59,3 +61,38 @@ A full-stack pet swipe app with a modern React frontend and a database-backed Ex
 ## License
 
 This project is for learning and demo purposes.
+
+## Deployment
+
+This project is deployed on Render. The live demo is available at:
+
+- https://pet-tinder-v6ix.onrender.com/
+
+If you want to deploy the app on Render yourself, use these commands in the Render dashboard for the service:
+
+Build Command
+
+```
+npm run build
+```
+
+Start Command
+
+```
+npm start
+```
+
+Make sure Render sets the environment variable `DATABASE_URL` (Postgres) on the service.
+
+Notes about the runtime and build artifacts
+
+- `npm run build` produces the production artifacts: `dist/client` (frontend) and `dist/server` (compiled server).
+- The `start` script runs `NODE_ENV=production node dist/server/index.js`. Ensure the `build` step runs before `start` so `dist/server/index.js` exists.
+- The server listens on the port defined by the `PORT` environment variable (Render provides this automatically). If `PORT` is not set, the server defaults to `3000`.
+- If you need to seed the database on Render (or locally), the project provides `npm run seed` which uses `ts-node` to run `server/src/seed.ts` against the configured `DATABASE_URL`.
+
+## Workshop / Credit
+
+This project was created as part of the AI Bootcamp from masters.dev. Workshop details:
+
+- https://master.dev/workshops/vibe-coding-bootcamp/
