@@ -12,16 +12,14 @@ const trustedOrigins = [
 const apiUrl = process.env.BETTER_AUTH_API_URL;
 const kvUrl = process.env.BETTER_AUTH_KV_URL;
 const apiKey = process.env.BETTER_AUTH_API_KEY;
+const secret = process.env.BETTER_AUTH_SECRET;
 
 if (process.env.NODE_ENV === "production") {
+  if (!secret) {
+    throw new Error("BETTER_AUTH_SECRET is required in production");
+  }
   if (!apiKey) {
     throw new Error("BETTER_AUTH_API_KEY is required in production");
-  }
-  if (!apiUrl) {
-    throw new Error("BETTER_AUTH_API_URL is required in production");
-  }
-  if (!kvUrl) {
-    throw new Error("BETTER_AUTH_KV_URL is required in production");
   }
 }
 
@@ -33,7 +31,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  secret: apiKey,
+  secret,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   trustedOrigins,
   plugins: [

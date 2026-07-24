@@ -9,11 +9,13 @@ This project is deployed on Render. The live demo is available at:
 
 ## Features
 
-- Swipe-style card interface for rating pets
-- Like / pass actions
-- Undo support for the previous rating
+- Better Auth sign-in/sign-up gate before users can access the pet deck
+- Mobile-first Tinder-style pet adoption deck
+- Touch swipe gestures: right to save a pet, left to pass
+- Like / pass actions with animated visual feedback
+- In-session saved-pet count and undo support for the previous decision
 - Keyboard shortcuts:
-  - L = Like
+  - L = Save pet
   - P = Pass
   - U = Undo
 - Backend-powered pet data fetched from PostgreSQL
@@ -52,7 +54,8 @@ This project is deployed on Render. The live demo is available at:
 
    ```env
    DATABASE_URL=your_postgres_connection_string
-   BETTER_AUTH_API_KEY=use_a_random_secret_of_at_least_32_characters
+   BETTER_AUTH_SECRET=use_a_random_secret_of_at_least_32_characters
+   BETTER_AUTH_API_KEY=your_better_auth_infrastructure_dashboard_key
    BETTER_AUTH_URL=http://localhost:3000
    BETTER_AUTH_TRUSTED_ORIGIN=http://localhost:5173
    ```
@@ -84,6 +87,10 @@ Better Auth provides email/password authentication at `/api/auth/*`. Its tables
 (`user`, `session`, `account`, and `verification`) share the same PostgreSQL
 database as the app.
 
+The optional Better Auth Infrastructure Dashboard plugin is enabled. It needs
+`BETTER_AUTH_API_KEY` for dashboard analytics and admin endpoints. This API key
+is separate from `BETTER_AUTH_SECRET`, which signs application sessions.
+
 Confirm the service is available:
 
 ```bash
@@ -100,6 +107,16 @@ curl -i -X POST http://localhost:3000/api/auth/sign-up/email \
 
 `GET /api/me` returns the current session when the request includes the Better
 Auth session cookie.
+
+## Using the Pet Deck
+
+After signing in, browse pets by swiping the card or using the action buttons:
+
+- Swipe right / press **L** — save a pet you would like to adopt
+- Swipe left / press **P** — pass on a pet
+- Press **U** or use the undo button — reverse the latest decision
+
+The deck is responsive and supports touch interactions on mobile devices.
 
 ## Notes
 
@@ -121,7 +138,7 @@ If you want to deploy the app on Render yourself, use these commands in the Rend
 Build Command
 
 ```
-npm run build
+npm ci && npm run build:render
 ```
 
 Start Command
@@ -134,14 +151,15 @@ Set these environment variables on the Render web service:
 
 ```env
 DATABASE_URL=your_render_postgres_connection_string
-BETTER_AUTH_API_KEY=a_stable_random_secret_of_at_least_32_characters
+BETTER_AUTH_SECRET=a_stable_random_secret_of_at_least_32_characters
+BETTER_AUTH_API_KEY=your_better_auth_infrastructure_dashboard_key
 BETTER_AUTH_URL=https://pet-tinder-v6ix.onrender.com
 BETTER_AUTH_TRUSTED_ORIGIN=https://pet-tinder-v6ix.onrender.com
 ```
 
-Run `npm run auth:setup` once against that database before testing deployed
-authentication. If your local `.env` points at this same Render database,
-running the command locally already completes that setup.
+`npm run build:render` runs the idempotent `auth:setup` command during each
+Render build, ensuring the Better Auth tables exist without modifying the pets
+table or its data.
 
 Notes about the runtime and build artifacts
 
