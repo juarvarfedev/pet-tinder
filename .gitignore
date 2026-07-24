@@ -36,9 +36,6 @@ build/
 .env.test.local
 .env.production.local
 
-# npm
-package-lock.json
-
 # macOS
 .AppleDouble
 .LSOverride
