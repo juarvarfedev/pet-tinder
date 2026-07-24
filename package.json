@@ -8,8 +8,11 @@
     "build:client": "vite build --config vite.config.mjs",
     "build:server": "tsc -p server/tsconfig.json",
     "build": "npm run build:client && npm run build:server",
+    "build:render": "npm run build:client && npm run build:server && npm run drizzle:push",
     "start": "NODE_ENV=production node dist/server/index.js",
     "seed": "ts-node --project server/tsconfig.json server/src/seed.ts",
+    "drizzle:generate": "drizzle-kit generate --output json --config drizzle.config.ts",
+    "drizzle:push": "drizzle-kit push --output json --config drizzle.config.ts",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {

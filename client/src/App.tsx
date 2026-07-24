@@ -6,6 +6,7 @@ export type Pet = {
   id: string;
   name: string;
   species: string;
+  photo?: string;
 };
 
 type Decision = "like" | "pass";
@@ -30,6 +31,10 @@ const mapSpeciesToCount: Record<string, number> = {
 };
 
 function getPetImage(pet: Pet, position: number) {
+  if (pet.photo) {
+    return pet.photo;
+  }
+
   const imageSpecies = pet.species in mapSpeciesToCount ? pet.species : "dog";
   const count = mapSpeciesToCount[imageSpecies];
   const index = (((position % count) + count) % count) + 1;

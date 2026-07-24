@@ -23,6 +23,7 @@
   "include": [
     "client/src",
     "server/src",
-    "vite.config.ts"
+    "vite.config.ts",
+    "drizzle.config.ts"
   ]
 }

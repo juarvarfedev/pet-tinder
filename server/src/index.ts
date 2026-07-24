@@ -3,7 +3,6 @@ import path from "path";
 import dotenv from "dotenv";
 import { db } from "./db";
 import { pets } from "./schema";
-import { eq } from "drizzle-orm";
 
 dotenv.config();
 
@@ -21,27 +20,17 @@ app.get("/api/pets", async (req, res) => {
       id: String(pet.id),
       name: pet.name,
       species: pet.species,
+      breed: pet.breed,
+      ageMonths: pet.ageMonths,
+      gender: pet.gender,
+      bio: pet.bio,
+      traits: pet.traits,
+      city: pet.city,
+      state: pet.state,
+      photo: pet.photo,
+      adoptionFee: pet.adoptionFee,
     })),
   );
-});
-
-app.post("/api/pets", async (req, res) => {
-  const { name, species } = req.body;
-  if (!name || !species) {
-    return res.status(400).json({ message: "name and species are required" });
-  }
-
-  const existing = await db
-    .select()
-    .from(pets)
-    .where(eq(pets.name, name))
-    .limit(1);
-  if (existing.length > 0) {
-    return res.status(409).json({ message: "Pet already exists" });
-  }
-
-  const inserted = await db.insert(pets).values({ name, species }).returning();
-  res.status(201).json(inserted[0]);
 });
 
 app.use((req, res, next) => {
