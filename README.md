@@ -52,7 +52,7 @@ This project is deployed on Render. The live demo is available at:
 
    ```env
    DATABASE_URL=your_postgres_connection_string
-   BETTER_AUTH_SECRET=use_a_random_secret_of_at_least_32_characters
+   BETTER_AUTH_API_KEY=use_a_random_secret_of_at_least_32_characters
    BETTER_AUTH_URL=http://localhost:3000
    BETTER_AUTH_TRUSTED_ORIGIN=http://localhost:5173
    ```
@@ -134,7 +134,7 @@ Set these environment variables on the Render web service:
 
 ```env
 DATABASE_URL=your_render_postgres_connection_string
-BETTER_AUTH_SECRET=a_stable_random_secret_of_at_least_32_characters
+BETTER_AUTH_API_KEY=a_stable_random_secret_of_at_least_32_characters
 BETTER_AUTH_URL=https://pet-tinder-v6ix.onrender.com
 BETTER_AUTH_TRUSTED_ORIGIN=https://pet-tinder-v6ix.onrender.com
 ```

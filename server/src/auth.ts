@@ -8,8 +8,8 @@ const trustedOrigins = [
   "http://localhost:5173",
 ].filter((origin): origin is string => Boolean(origin));
 
-if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_SECRET) {
-  throw new Error("BETTER_AUTH_SECRET is required in production");
+if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_API_KEY) {
+  throw new Error("BETTER_AUTH_API_KEY is required in production");
 }
 
 export const auth = betterAuth({
@@ -20,7 +20,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  secret: process.env.BETTER_AUTH_SECRET,
+  secret: process.env.BETTER_AUTH_API_KEY,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   trustedOrigins,
 });
