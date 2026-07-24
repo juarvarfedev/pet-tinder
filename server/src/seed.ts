@@ -1,5 +1,5 @@
-import { db } from "./db";
-import { pets } from "./schema";
+import { db } from "./db.js";
+import { pets } from "./schema.js";
 
 type SeedPet = {
   name: string;
