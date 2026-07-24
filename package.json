@@ -9,7 +9,7 @@
     "build:client": "vite build --config vite.config.mjs",
     "build:server": "tsc -p server/tsconfig.json",
     "build": "npm run build:client && npm run build:server",
-    "build:render": "npm run build:client && npm run build:server && npm run drizzle:push",
+    "build:render": "npm run build:client && npm run build:server && npm run auth:setup",
     "start": "NODE_ENV=production node dist/server/index.js",
     "seed": "tsx server/src/seed.ts",
     "auth:setup": "tsx server/src/setup-auth-tables.ts",
