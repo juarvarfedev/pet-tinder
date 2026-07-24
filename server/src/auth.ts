@@ -36,9 +36,9 @@ export const auth = betterAuth({
   trustedOrigins,
   plugins: [
     dash({
-      apiUrl,
-      kvUrl,
       apiKey,
+      ...(apiUrl ? { apiUrl } : {}),
+      ...(kvUrl ? { kvUrl } : {}),
     }),
   ],
 });
