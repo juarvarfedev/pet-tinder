@@ -1,275 +1,291 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Heart, RefreshCcw } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
+import {
+  ArrowLeft,
+  Bone,
+  Heart,
+  LogOut,
+  MapPin,
+  PawPrint,
+  RefreshCcw,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
 
-export type Pet = {
+type Pet = {
   id: string;
   name: string;
   species: string;
-  photo?: string;
+  breed: string;
+  ageMonths: number;
+  gender: string;
+  bio: string;
+  traits: string[];
+  city: string;
+  state: string;
+  photo: string;
+  adoptionFee: number;
 };
 
+type Session = {
+  user: { id: string; name: string; email: string };
+};
+
+type AuthMode = "sign-in" | "sign-up";
 type Decision = "like" | "pass";
 
-type DecisionRecord = {
-  pet: Pet;
-  decision: Decision;
+const formatAge = (months: number) => {
+  if (months < 12) return `${months} mo`;
+  const years = Math.floor(months / 12);
+  const remainder = months % 12;
+  return remainder ? `${years} yr ${remainder} mo` : `${years} yr`;
 };
 
-const BASE_IMAGE_URL = "https://pets-images.dev-apis.com/pets";
+const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 
-const buildImageUrl = (species: string, index: number) => {
-  return `${BASE_IMAGE_URL}/${species}${index}.jpg`;
-};
-
-const mapSpeciesToCount: Record<string, number> = {
-  dog: 39,
-  cat: 14,
-  bird: 9,
-  rabbit: 3,
-  reptile: 2,
-};
-
-function getPetImage(pet: Pet, position: number) {
-  if (pet.photo) {
-    return pet.photo;
+const readResponse = async (response: Response) => {
+  const data = (await response.json().catch(() => null)) as
+    | { message?: string; error?: string }
+    | null;
+  if (!response.ok) {
+    throw new Error(data?.message ?? data?.error ?? "Something went wrong. Please try again.");
   }
+  return data;
+};
 
-  const imageSpecies = pet.species in mapSpeciesToCount ? pet.species : "dog";
-  const count = mapSpeciesToCount[imageSpecies];
-  const index = (((position % count) + count) % count) + 1;
-  return buildImageUrl(imageSpecies, index);
+function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
+  const [mode, setMode] = useState<AuthMode>("sign-in");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const endpoint = mode === "sign-in" ? "sign-in/email" : "sign-up/email";
+      await readResponse(
+        await fetch(`/api/auth/${endpoint}`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            mode === "sign-in" ? { email, password } : { name, email, password },
+          ),
+        }),
+      );
+
+      const session = await readResponse(
+        await fetch("/api/me", { credentials: "include" }),
+      );
+      if (!session || !("user" in session) || !session.user) {
+        throw new Error("We couldn't start your session. Please try again.");
+      }
+      onAuthenticated(session as Session);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to continue.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="auth-shell">
+      <section className="auth-hero">
+        <div className="auth-brand"><PawPrint size={21} fill="currentColor" /> Paws &amp; Paths</div>
+        <div className="auth-copy">
+          <span className="eyebrow"><Sparkles size={14} /> Make a match that matters</span>
+          <h1>Meet your<br /><em>new best friend.</em></h1>
+          <p>Swipe through local pets looking for a forever home. One small yes can change two lives.</p>
+        </div>
+        <div className="hero-card hero-card-back"><img src="https://pets-images.dev-apis.com/pets/dog39.jpg" alt="Happy dog" /></div>
+        <div className="hero-card hero-card-front">
+          <img src="https://pets-images.dev-apis.com/pets/cat14.jpg" alt="Adoptable cat" />
+          <div><strong>Milo</strong><span>Rescue ready</span></div>
+          <Heart className="hero-heart" fill="currentColor" size={28} />
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="mobile-brand"><PawPrint size={21} fill="currentColor" /> Paws &amp; Paths</div>
+        <div className="auth-panel-heading">
+          <span className="eyebrow dark"><Bone size={14} /> Your adoption journey</span>
+          <h2>{mode === "sign-in" ? "Welcome back" : "Start matching"}</h2>
+          <p>{mode === "sign-in" ? "Sign in to continue meeting pets." : "Create an account to save the pets you love."}</p>
+        </div>
+        <form onSubmit={submit} className="auth-form">
+          {mode === "sign-up" && <label>First name<input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Alex" /></label>}
+          <label>Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
+          <label>Password<input required minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" /></label>
+          {error && <p className="form-error">{error}</p>}
+          <button className="auth-submit" disabled={isSubmitting}>{isSubmitting ? "Just a moment…" : mode === "sign-in" ? "Sign in" : "Create my account"}<ArrowLeft size={18} /></button>
+        </form>
+        <p className="auth-switch">{mode === "sign-in" ? "New around here?" : "Already have an account?"} <button onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setError(null); }}>{mode === "sign-in" ? "Create an account" : "Sign in"}</button></p>
+        <p className="auth-fineprint">By continuing, you agree to approach every adoption with care, patience, and a whole lot of love.</p>
+      </section>
+    </main>
+  );
 }
 
-function shuffle<T>(items: T[]) {
-  return [...items].sort(() => Math.random() - 0.5);
+function PetCard({ pet, onDecision }: { pet: Pet; onDecision: (decision: Decision) => void }) {
+  const x = useMotionValue(0);
+  const likeOpacity = useTransform(x, [0, 55, 125], [0, 0.65, 1]);
+  const passOpacity = useTransform(x, [-125, -55, 0], [1, 0.65, 0]);
+  const rotate = useTransform(x, [-220, 0, 220], [-10, 0, 10]);
+
+  return (
+    <motion.article
+      className="pet-card active-card"
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.9}
+      dragMomentum={false}
+      style={{ x, rotate, touchAction: "pan-y" }}
+      onDragEnd={(_, info) => {
+        if (info.offset.x > 110) onDecision("like");
+        if (info.offset.x < -110) onDecision("pass");
+      }}
+      whileTap={{ cursor: "grabbing" }}
+    >
+      <img src={pet.photo} alt={`${pet.name}, a ${pet.breed}`} />
+      <motion.div className="swipe-badge like" style={{ opacity: likeOpacity }}>ADOPT <Heart fill="currentColor" size={19} /></motion.div>
+      <motion.div className="swipe-badge pass" style={{ opacity: passOpacity }}>PASS <X size={21} /></motion.div>
+      <div className="pet-gradient" />
+      <div className="pet-details">
+        <div className="pet-title"><h2>{pet.name}<span>{formatAge(pet.ageMonths)}</span></h2><p><MapPin size={15} /> {pet.city}, {pet.state}</p></div>
+        <p className="pet-bio">{pet.bio}</p>
+        <div className="trait-row">{pet.traits.slice(0, 3).map((trait) => <span key={trait}>{trait}</span>)}</div>
+      </div>
+    </motion.article>
+  );
+}
+
+function AdoptionDeck({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [index, setIndex] = useState(0);
+  const [history, setHistory] = useState<Decision[]>([]);
+  const [liked, setLiked] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exit, setExit] = useState<Decision | null>(null);
+
+  const loadPets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/pets", { credentials: "include" });
+      if (!response.ok) throw new Error("We couldn't fetch pets right now.");
+      setPets(shuffle((await response.json()) as Pet[]));
+      setIndex(0);
+      setHistory([]);
+      setLiked([]);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load pets.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadPets(); }, [loadPets]);
+
+  const currentPet = pets[index];
+  const nextPet = pets[index + 1];
+  const decide = useCallback((decision: Decision) => {
+    if (!currentPet || exit) return;
+    setExit(decision);
+    setHistory((previous) => [decision, ...previous]);
+    if (decision === "like") setLiked((previous) => [currentPet, ...previous]);
+    window.setTimeout(() => {
+      setIndex((previous) => previous + 1);
+      setExit(null);
+    }, 230);
+  }, [currentPet, exit]);
+
+  const undo = useCallback(() => {
+    if (!history.length || exit) return;
+    const previousDecision = history[0];
+    setIndex((previous) => Math.max(0, previous - 1));
+    setHistory((previous) => previous.slice(1));
+    if (previousDecision === "like") setLiked((previous) => previous.slice(1));
+  }, [exit, history]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement).tagName === "INPUT") return;
+      if (event.key.toLowerCase() === "l") decide("like");
+      if (event.key.toLowerCase() === "p") decide("pass");
+      if (event.key.toLowerCase() === "u") undo();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [decide, undo]);
+
+  const deckStats = useMemo(() => `${Math.max(pets.length - index, 0)} pets nearby`, [index, pets.length]);
+  const signOut = async () => {
+    await fetch("/api/auth/sign-out", { method: "POST", credentials: "include" });
+    onSignOut();
+  };
+
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <a className="wordmark" href="/"><PawPrint size={22} fill="currentColor" /> Paws &amp; Paths</a>
+        <div className="nearby"><span /> {deckStats}</div>
+        <div className="profile-menu"><div className="avatar">{session.user.name.slice(0, 1).toUpperCase()}</div><span>{session.user.name.split(" ")[0]}</span><button onClick={() => void signOut()} aria-label="Sign out"><LogOut size={17} /></button></div>
+      </header>
+
+      <section className="deck-layout">
+        <aside className="intro-copy"><span className="eyebrow dark"><Sparkles size={14} /> Adopt, don&apos;t shop</span><h1>Find the one<br />who finds <em>you.</em></h1><p>Every right swipe is a step toward a new beginning.</p><div className="keyboard-tip"><kbd>←</kbd><span>Pass</span><kbd>→</kbd><span>Save</span></div></aside>
+
+        <section className="deck-area" aria-label="Pet adoption cards">
+          {loading && <div className="deck-message"><PawPrint className="loading-paw" /> Finding pets near you…</div>}
+          {error && <div className="deck-message error"><p>{error}</p><button onClick={() => void loadPets()}>Try again</button></div>}
+          {!loading && !error && !currentPet && <div className="deck-message"><Heart size={34} fill="currentColor" /><h2>That&apos;s everyone for now.</h2><p>You made {liked.length} potential {liked.length === 1 ? "match" : "matches"} today.</p><button onClick={() => void loadPets()}><RefreshCcw size={16} /> Refresh the deck</button></div>}
+          {!loading && !error && currentPet && <>
+            {nextPet && <article className="pet-card next-card"><img src={nextPet.photo} alt="Next pet" /></article>}
+            <AnimatePresence initial={false}>
+              {!exit ? <PetCard key={currentPet.id} pet={currentPet} onDecision={decide} /> : <motion.article key={currentPet.id} className="pet-card active-card" initial={{ x: 0, opacity: 1 }} animate={{ x: exit === "like" ? 520 : -520, rotate: exit === "like" ? 18 : -18, opacity: 0 }} transition={{ duration: 0.22 }}><img src={currentPet.photo} alt="" /></motion.article>}
+            </AnimatePresence>
+          </>}
+        </section>
+
+        <aside className="match-panel"><span className="eyebrow dark"><Heart size={14} fill="currentColor" /> Saved today</span><strong>{liked.length}</strong><p>{liked.length === 1 ? "potential match" : "potential matches"}</p><div className="saved-avatars">{liked.slice(0, 3).map((pet) => <img key={pet.id} src={pet.photo} alt={pet.name} />)}</div></aside>
+      </section>
+
+      <nav className="action-bar" aria-label="Pet actions">
+        <button className="undo" disabled={!history.length || Boolean(exit)} onClick={undo} aria-label="Undo"><RotateCcw size={21} /></button>
+        <button className="pass" disabled={!currentPet || Boolean(exit)} onClick={() => decide("pass")} aria-label="Pass"><X size={31} /></button>
+        <button className="like" disabled={!currentPet || Boolean(exit)} onClick={() => decide("like")} aria-label="Save pet"><Heart size={29} fill="currentColor" /></button>
+      </nav>
+      <p className="mobile-hint">Swipe right to save · left to pass</p>
+    </main>
+  );
 }
 
 function App() {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [history, setHistory] = useState<DecisionRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadPets = useCallback(() => {
-    setIsLoading(true);
-    setError(null);
-
-    fetch("/api/pets")
-      .then((res) => res.json())
-      .then((data) => {
-        setPets(shuffle(data));
-        setCurrentIndex(0);
-        setHistory([]);
-      })
-      .catch(() => setError("Failed to load pets."))
-      .finally(() => setIsLoading(false));
-  }, []);
+  const [session, setSession] = useState<Session | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    loadPets();
-  }, [loadPets]);
-
-  const currentPet = pets[currentIndex];
-  const nextPet = pets[currentIndex + 1];
-
-  const handleDecision = useCallback((pet: Pet, decision: Decision) => {
-    setHistory((prev) => [{ pet, decision }, ...prev]);
-    setCurrentIndex((prev) => prev + 1);
+    fetch("/api/me", { credentials: "include" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => setSession(data?.user ? data as Session : null))
+      .catch(() => setSession(null))
+      .finally(() => setCheckingSession(false));
   }, []);
 
-  const handleUndo = useCallback(() => {
-    if (history.length === 0) {
-      return;
-    }
-
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
-    setHistory((prev) => prev.slice(1));
-  }, [history]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!currentPet) return;
-
-      const key = event.key.toLowerCase();
-      if (key === "l") {
-        handleDecision(currentPet, "like");
-      } else if (key === "p") {
-        handleDecision(currentPet, "pass");
-      } else if (key === "u") {
-        handleUndo();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPet, handleDecision, handleUndo]);
-
-  const cards = useMemo(() => {
-    return [currentPet, nextPet].filter(Boolean);
-  }, [currentPet, nextPet]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white px-4 py-8">
-      <div className="mx-auto max-w-2xl rounded-[32px] border border-white/10 bg-slate-950/80 p-6 shadow-soft backdrop-blur-xl">
-        <header className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.32em] text-pink-300">
-              Pet Tinder
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold">
-              Swipe through the pack
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-slate-400">
-              Like, pass, or undo your last decision. Works on desktop and touch
-              devices with drag and arrow keys.
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-right text-sm text-slate-400">
-            <p>Keyboard</p>
-            <p className="mt-1">L = Like · P = Pass · U = Undo</p>
-          </div>
-        </header>
-
-        <main className="relative h-[640px] overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/90 p-4 shadow-soft">
-          {isLoading ? (
-            <div className="flex h-full items-center justify-center">
-              Loading pets…
-            </div>
-          ) : error ? (
-            <div className="flex h-full items-center justify-center text-red-300">
-              {error}
-            </div>
-          ) : !currentPet ? (
-            <div className="flex h-full flex-col items-center justify-center gap-4 text-center text-slate-300">
-              <p className="text-xl font-semibold">No more pets for now</p>
-              <button
-                className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-pink-400"
-                onClick={() => window.location.reload()}
-              >
-                <RefreshCcw size={18} /> Refresh deck
-              </button>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              {cards.map((pet, index) => {
-                const position = currentIndex + index;
-                const rotation = index === 0 ? 0 : -4;
-                const translate = index === 0 ? "0" : "-10px";
-                return (
-                  <motion.div
-                    key={pet.id}
-                    className="absolute inset-x-0 mx-auto w-[92%] max-w-lg rounded-[32px] border border-white/10 bg-slate-950/95 shadow-soft"
-                    drag={index === 0 ? "x" : false}
-                    dragConstraints={{ left: -250, right: 250 }}
-                    dragElastic={0.18}
-                    dragMomentum={false}
-                    dragDirectionLock
-                    style={{ touchAction: "pan-y" }}
-                    onDragEnd={(_, info) => {
-                      if (index !== 0) return;
-                      if (info.offset.x > 140) {
-                        handleDecision(pet, "like");
-                      } else if (info.offset.x < -140) {
-                        handleDecision(pet, "pass");
-                      }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{
-                      y: index === 0 ? 0 : 16,
-                      opacity: index === 0 ? 1 : 0.8,
-                    }}
-                    animate={{
-                      y: 0,
-                      opacity: 1,
-                      rotate: rotation,
-                      x: translate,
-                    }}
-                    transition={{ type: "spring", stiffness: 220, damping: 22 }}
-                  >
-                    <img
-                      src={getPetImage(pet, position)}
-                      alt={`${pet.name} the ${pet.species}`}
-                      className="h-[420px] w-full rounded-t-[32px] object-cover"
-                    />
-                    <div className="space-y-4 p-6">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-3xl font-semibold">{pet.name}</p>
-                          <p className="mt-1 text-sm uppercase tracking-[0.26em] text-slate-400">
-                            {pet.species}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-pink-500/15 px-3 py-1 text-xs uppercase tracking-[0.24em] text-pink-300">
-                          {index === 0 ? "Now" : "Next"}
-                        </span>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                            Swipe action
-                          </p>
-                          <p className="mt-2 text-lg font-semibold">
-                            {index === 0 ? "Drag left or right" : "Preview"}
-                          </p>
-                        </div>
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-4">
-                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                            Deck position
-                          </p>
-                          <p className="mt-2 text-lg font-semibold">
-                            {currentIndex + 1} / {pets.length}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </main>
-
-        <footer className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              disabled={history.length === 0}
-              onClick={handleUndo}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-100 transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-slate-800"
-            >
-              <ArrowLeft size={16} /> Undo
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => currentPet && handleDecision(currentPet, "pass")}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/15"
-            >
-              <span className="text-pink-300">←</span> Pass
-            </button>
-            <button
-              type="button"
-              onClick={() => currentPet && handleDecision(currentPet, "like")}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-pink-400"
-            >
-              Like <Heart size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
-            >
-              <RefreshCcw size={16} /> Shuffle
-            </button>
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
+  if (checkingSession) return <div className="page-loader"><PawPrint className="loading-paw" /> Loading Paws &amp; Paths…</div>;
+  return session ? <AdoptionDeck session={session} onSignOut={() => setSession(null)} /> : <AuthScreen onAuthenticated={setSession} />;
 }
 
 export default App;
